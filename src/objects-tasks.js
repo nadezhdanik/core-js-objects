@@ -365,33 +365,125 @@ function group(array, keySelector, valueSelector) {
  *  For more examples see unit tests.
  */
 
+class Builder {
+  constructor() {
+    this.result = '';
+    this.usedSelectors = {
+      element: false,
+      id: false,
+      pseudoElement: false,
+    };
+    this.orderMap = {
+      element: 0,
+      id: 1,
+      class: 2,
+      attr: 3,
+      pseudoClass: 4,
+      pseudoElement: 5,
+    };
+    this.order = [];
+  }
+
+  element(value) {
+    this.checkOrder('element');
+    this.checkRepeat('element');
+    this.result += value;
+    return this;
+  }
+
+  id(value) {
+    this.checkOrder('id');
+    this.checkRepeat('id');
+    this.result += `#${value}`;
+    return this;
+  }
+
+  class(value) {
+    this.checkOrder('class');
+    this.result += `.${value}`;
+    return this;
+  }
+
+  attr(value) {
+    this.checkOrder('attr');
+    this.result += `[${value}]`;
+    return this;
+  }
+
+  pseudoClass(value) {
+    this.checkOrder('pseudoClass');
+    this.result += `:${value}`;
+    return this;
+  }
+
+  pseudoElement(value) {
+    this.checkOrder('pseudoElement');
+    this.checkRepeat('pseudoElement');
+    this.result += `::${value}`;
+    return this;
+  }
+
+  stringify() {
+    return this.result;
+  }
+
+  combine(selector1, combinator, selector2) {
+    this.result = `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
+    return this;
+  }
+
+  checkRepeat(selector) {
+    if (this.usedSelectors[selector]) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    }
+    this.usedSelectors[selector] = true;
+    return this;
+  }
+
+  checkOrder(selector) {
+    const currentOrder = this.orderMap[selector];
+    if (
+      this.order.length > 0 &&
+      currentOrder < this.order[this.order.length - 1]
+    ) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+    this.order.push(currentOrder);
+    return this;
+  }
+}
+
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return new Builder().element(value);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new Builder().id(value);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new Builder().class(value);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new Builder().attr(value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new Builder().pseudoClass(value);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new Builder().pseudoElement(value);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    return new Builder().combine(selector1, combinator, selector2);
   },
 };
 
